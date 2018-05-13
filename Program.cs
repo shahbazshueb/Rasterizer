@@ -11,12 +11,13 @@ namespace rasterizer
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            var points = GetPointsOnLine(2.1F,0.3F,3,15);
+            var points = GetPointsOnLine(2.2F, 1F, 8.2F, 4F);
             var list = new List<Point>();
-            foreach(var point in points) {
+            foreach (var point in points)
+            {
                 Console.WriteLine(point);
             }
-            
+
         }
         static void line(int x1, int y1, int x2, int y2)
         {
@@ -54,9 +55,91 @@ namespace rasterizer
                 }
                 Console.WriteLine("x:" + x + " Y: " + y);
             }
-}
+        }
 
+        //x0 and y0 are initial point
+        //x1 and y1 are final points
+        //For example, if direction of line is upwards, y0 must be less than y1 so that outer tiles are rasterized.
+        // Similarly, if the direction is right x0 must be less than x1
         public static IEnumerable<PointF> GetPointsOnLine(float x0, float y0, float x1, float y1)
+        {
+            float dy = Math.Abs(y0 - y1);
+            float dx = Math.Abs(x0 - x1);
+            bool steep = dy > dx;
+            if (steep)
+            {
+                bool directionDown = y0 > y1;
+                float m = dx / dy;
+
+                //return the point tile as it is
+                var initialTile = new Point(Convert.ToInt32(Math.Floor(x0)), Convert.ToInt32(Math.Floor(y0)));
+                var finalTile = new Point(Convert.ToInt32(Math.Floor(x1)), Convert.ToInt32(Math.Floor(y1)));
+                yield return initialTile;
+                if (initialTile == finalTile || initialTile.Y == finalTile.Y + 1)
+                {
+                    yield return finalTile;
+                    yield break;
+                }
+                float xTemp = directionDown ? (x0 - (y0 % 1) * m) - m : (1 - (y0 % 1)) * m + x0; //x-coordinates for second tile
+                if (directionDown)
+                {
+                    for (int y = initialTile.Y - 1; y > finalTile.Y; y--)
+                    {
+                        int x = Convert.ToInt32(Math.Floor(xTemp));
+                        yield return new Point(x, y);
+                        xTemp -= m;
+                    }
+                }
+                else
+                {
+                    for (int y = initialTile.Y + 1; y < finalTile.Y; y++)
+                    {
+                        int x = Convert.ToInt32(Math.Floor(xTemp));
+                        yield return new Point(x, y);
+                        xTemp += m;
+                    }
+                }
+                yield return finalTile;
+            }
+            else
+            {
+                bool directionLeft = x0 > x1;
+                float m = dy / dx;
+
+                //return the point tile as it is
+                var initialTile = new Point(Convert.ToInt32(Math.Floor(x0)), Convert.ToInt32(Math.Floor(y0)));
+                var finalTile = new Point(Convert.ToInt32(Math.Floor(x1)), Convert.ToInt32(Math.Floor(y1)));
+                yield return initialTile;
+                if (initialTile == finalTile || initialTile.X == finalTile.X + 1)
+                {
+                    yield return finalTile;
+                    yield break;
+                }
+                float yTemp = directionLeft ? (y0 - (x0 % 1) * m) - m : (1 - (x0 % 1)) * m + y0; //x-coordinates for second tile
+                if (directionLeft)
+                {
+                    for (int x = initialTile.X - 1; x > finalTile.X; x--)
+                    {
+                        int y = Convert.ToInt32(Math.Floor(yTemp));
+                        yield return new Point(x, y);
+                        yTemp -= m;
+                    }
+                }
+                else
+                {
+                    for (int x = initialTile.X + 1; x < finalTile.X; x++)
+                    {
+                        int y = Convert.ToInt32(Math.Floor(yTemp));
+                        yield return new Point(x, y);
+                        yTemp += m;
+                    }
+                }
+                yield return finalTile;
+            }
+            yield break;
+        }
+
+        public static IEnumerable<PointF> GetPointsOnLine2(float x0, float y0, float x1, float y1)
         {
             bool steep = Math.Abs(y1 - y0) > Math.Abs(x1 - x0);
             if (steep)
